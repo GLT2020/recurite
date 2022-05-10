@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.glt.server.mapper.CompanyMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.glt.server.pojo.Company">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="password" property="password" />
+        <result column="phone" property="phone" />
+        <result column="address" property="address" />
+        <result column="license" property="license" />
+        <result column="person" property="person" />
+        <result column="email" property="email" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="userface" property="userface" />
+        <result column="remark" property="remark" />
+        <result column="state" property="state" />
+    </resultMap>
+
+<!--    获取所有公司包含工地信息-->
+    <resultMap id="companyAndSites" type="com.glt.server.pojo.Company" extends="BaseResultMap">
+<!--        <collection property="sites" ofType="com.glt.server.pojo.Site">-->
+<!--            <id column="sid" property="id"/>-->
+<!--            <result column="sname" property="name"/>-->
+<!--            <result column="suser_name" property="userName" />-->
+<!--            <result column="sphone" property="phone" />-->
+<!--            <result column="saddress" property="address" />-->
+<!--            <result column="screate_time" property="createTime" />-->
+<!--            <result column="sstart_time" property="startTime" />-->
+<!--            <result column="scomplete_time" property="completeTime" />-->
+<!--            <result column="st_time" property="tTime" />-->
+<!--            <result column="suserface" property="userface" />-->
+<!--            <result column="sremark" property="remark" />-->
+<!--            <result column="sr_state" property="rState" />-->
+<!--            <result column="ss_state" property="sState" />-->
+
+<!--        </collection>-->
+        <collection column="id" property="sites" ofType="com.glt.server.pojo.Site" select="getSites">
+        </collection>
+    </resultMap>
+
+<!--    工地基本map-->
+    <resultMap id="BaseSiteMap" type="com.glt.server.pojo.Site">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="user_name" property="userName" />
+        <result column="phone" property="phone" />
+        <result column="address" property="address" />
+        <result column="create_time" property="createTime" />
+        <result column="start_time" property="startTime" />
+        <result column="complete_time" property="completeTime" />
+        <result column="expect_time" property="expectTime" />
+        <result column="userface" property="userface" />
+        <result column="remark" property="remark" />
+        <result column="recurit_state" property="recuritState" />
+        <result column="site_state" property="siteState" />
+    </resultMap>
+
+<!--    子查询，获取响应的site-->
+    <select id="getSites" resultMap="BaseSiteMap">
+        SELECT
+            s.*
+        FROM
+            site s
+                LEFT JOIN company_site as cs ON s.id = cs.sid
+                LEFT JOIN company as c ON c.id = cs.companyId
+        where
+            c.id = #{id}
+    </select>
+
+    <!--    获取所有公司包含工地信息和工地的招聘信息-->
+
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, name, password, phone, address, license, person, create_time, update_time, userface, remark, state
+    </sql>
+
+
+    <select id="getRoles" resultType="com.glt.server.pojo.Role">
+        SELECT
+            r.id,
+            r.name,
+            r.nameZh
+        FROM
+            role AS r
+                LEFT JOIN company_role AS ar ON r.id = ar.rid
+        WHERE ar.adminId = #{id}
+    </select>
+
+<!--    根据用户名获取id-->
+    <select id="getIdByName" resultType="com.glt.server.pojo.Company">
+        SELECT
+            *
+
+        FROM
+            company as c
+
+        WHERE c.name = #{name}
+    </select>
+
+<!--    根据id修改密码-->
+    <update id="updatepasswordById" >
+        update company
+        set password = #{newpassword}
+        where id = #{id}
+    </update>
+
+<!--    获取验证公司信息，分页数据-->
+    <select id="verifyListPage"  resultMap="BaseResultMap">
+        SELECT
+            c.*
+        FROM
+            company c
+        WHERE
+            c.state = 1
+           OR
+            c.state = 0
+
+    </select>
+
+<!--   获取所有公司信息，分页数据 -->
+    <select id="getAllCompanyByPage" resultMap="BaseResultMap">
+        SELECT
+            c.*
+
+
+        FROM
+            company c
+
+
+
+    </select>
+</mapper>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.glt.server.mapper.AdminMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.glt.server.pojo.Admin">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="password" property="password" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="userface" property="userface" />
+        <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 角色基础map -->
+    <resultMap id="BaseRolesMap" type="com.glt.server.pojo.Role">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="nameZh" property="nameZh" />
+        <result column="remark" property="remark" />
+    </resultMap>
+
+<!--    携带角色系统用户map-->
+    <resultMap id="BaseAdminwithRolesMap" type="com.glt.server.pojo.Admin" extends="BaseResultMap">
+
+        <collection column="id" property="roles" ofType="BaseRolesMap" select="getRolesByAid">
+
+        </collection>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, name, password, create_time, update_time, userface, remark
+    </sql>
+
+<!--    子查询角色-->
+    <select id="getRolesByAid" resultType="com.glt.server.pojo.Role">
+        SELECT
+            r.id,
+            r.name,
+            r.nameZh,
+            r.remark
+        FROM
+            role AS r
+                LEFT JOIN admin_role AS ar ON r.id = ar.rid
+                LEFT JOIN admin AS a ON a.id = ar.adminId
+        WHERE a.id = #{id}
+    </select>
+
+
+    <select id="getRoles" resultType="com.glt.server.pojo.Role">
+        SELECT
+            r.id,
+            r.name,
+            r.nameZh
+        FROM
+            role AS r
+                LEFT JOIN admin_role AS ar ON r.id = ar.rid
+        WHERE ar.id = #{id}
+    </select>
+
+
+
+
+    <select id="searchAllAdminByPage" resultMap="BaseAdminwithRolesMap">
+        select
+            a.*
+        from
+            admin a
+    </select>
+</mapper>

@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.glt.server.mapper.WorkerMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.glt.server.pojo.Worker">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="password" property="password" />
+        <result column="phone" property="phone" />
+        <result column="email" property="email" />
+        <result column="nowAddress" property="nowAddress" />
+        <result column="address" property="address" />
+        <result column="education" property="education" />
+        <result column="sex" property="sex" />
+        <result column="birthday" property="birthday" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="userface" property="userface" />
+        <result column="remark" property="remark" />
+        <result column="state" property="state" />
+    </resultMap>
+
+<!--    (含工种列表)工人表-->
+    <resultMap id="SearchWithWorkerTypeByPage" type="com.glt.server.pojo.Worker" extends="BaseResultMap">
+        <result column="age" property="age"/>
+        <collection property="workTypeList"
+                    ofType="com.glt.server.pojo.WorkType">
+            <id column="wtid" property="id" />
+            <result column="wtname" property="name" />
+        </collection>
+    </resultMap>
+
+    <!--    多条件(不含含工种条件,子查询工种列表)分页查询工人-->
+    <resultMap id="SearchByPage" type="com.glt.server.pojo.Worker" extends="BaseResultMap">
+        <result column="age" property="age"/>
+        <collection property="workTypeList"
+                    ofType="com.glt.server.pojo.WorkType"
+                    select="getWorkTypeTypeBycondition"
+                    column="id"
+        >
+        </collection>
+    </resultMap>
+
+    <!--    工种种类基本map-->
+    <resultMap id="BaseWorkTypeMap" type="com.glt.server.pojo.WorkType">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="state" property="state" />
+    </resultMap>
+
+    <!--    子查询，通过id查询对应的工种种类-->
+    <select id="getWorkTypeTypeBycondition" resultMap="BaseWorkTypeMap">
+        select
+            wt.*
+        from
+            work_type wt
+            LEFT JOIN worker_work_type as wwt on wwt.tid = wt.id
+            LEFT JOIN worker as w on w.id = wwt.workerId
+        where
+            w.id = #{id}
+    </select>
+
+
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, name, password, phone, email, nowAddress, address, education, sex, birthday, create_time, update_time, userface, remark, state
+    </sql>
+
+
+<!--    查询角色-->
+    <select id="getRoles" resultType="com.glt.server.pojo.Role">
+        SELECT
+            r.id,
+            r.name,
+            r.nameZh
+        FROM
+            role AS r
+                LEFT JOIN worker_role AS ar ON r.id = ar.rid
+        WHERE ar.adminId = #{id}
+    </select>
+
+
+
+    <!--    根据电话号获取id-->
+    <select id="getIdByphone" resultType="com.glt.server.pojo.Worker">
+        SELECT
+            *
+
+        FROM
+            worker as w
+
+        WHERE w.phone = #{phone}
+    </select>
+
+<!--    按条件(有工种条件)分页查询工人-->
+    <select id="searchWorkerWithWorkTypeByPage" resultMap="SearchWithWorkerTypeByPage">
+        SELECT
+            w.*,
+            YEAR(CURDATE())-YEAR(w.birthday) age
+            <if test="null != searchWorkType and 0 !=searchWorkType">
+            ,wt.id wtid,
+            wt.name wtname
+            </if>
+
+        FROM
+            worker w
+            <if test="null != searchWorkType and 0 !=searchWorkType">
+                , worker_work_type AS wwt ,
+                work_type AS wt
+            </if>
+        <where>
+            w.state = 1
+            <if test="null != searchWorkType and 0 !=searchWorkType">
+                and
+                wwt.workerId = w.id
+                and
+                wwt.tid = wt.id
+                and
+                wt.id =  #{searchWorkType}
+            </if>
+
+            <if test="null != worker.name and ''!=worker.name">
+                and w.name LIKE CONCAT( '%', #{worker.name}, '%' )
+            </if>
+            <if test="null != worker.address and ''!=worker.address">
+                and w.address LIKE CONCAT( '%', #{worker.address}, '%' )
+            </if>
+            <if test="null != worker.nowAddress and ''!=worker.nowAddress">
+                and w.nowAddress LIKE CONCAT( '%', #{worker.nowAddress}, '%' )
+            </if>
+            <if test="null != worker.phone and ''!=worker.phone">
+                and w.phone = #{worker.phone}
+            </if>
+            <if test="null != worker.education and ''!=worker.education">
+                and w.education = #{worker.education}
+            </if>
+            <if test="null != worker.email and ''!=worker.email">
+                and w.email LIKE CONCAT( '%', #{worker.email}, '%' )
+            </if>
+            <if test="null != worker.sex and ''!=worker.sex">
+                and w.sex = #{worker.sex}
+            </if>
+
+        </where>
+    </select>
+
+    <!--    按条件(不含工种条件)分页查询工人-->
+    <select id="SearchWorkerByPage" resultMap="SearchByPage">
+        SELECT
+        w.*,
+        YEAR(CURDATE())-YEAR(w.birthday) age
+        FROM
+        worker w
+        <where>
+            w.state = 1
+            <if test="null != worker.name and ''!=worker.name">
+                and w.name LIKE CONCAT( '%', #{worker.name}, '%' )
+            </if>
+            <if test="null != worker.address and ''!=worker.address">
+                and w.address LIKE CONCAT( '%', #{worker.address}, '%' )
+            </if>
+            <if test="null != worker.nowAddress and ''!=worker.nowAddress">
+                and w.nowAddress LIKE CONCAT( '%', #{worker.nowAddress}, '%' )
+            </if>
+            <if test="null != worker.phone and ''!=worker.phone">
+                and w.phone = #{worker.phone}
+            </if>
+            <if test="null != worker.education and ''!=worker.education">
+                and w.education = #{worker.education}
+            </if>
+            <if test="null != worker.email and ''!=worker.email">
+                and w.email LIKE CONCAT( '%', #{worker.email}, '%' )
+            </if>
+            <if test="null != worker.sex and ''!=worker.sex">
+                and w.sex = #{worker.sex}
+            </if>
+
+        </where>
+    </select>
+
+<!--    根据id获取工人信息（包含工种列表）-->
+    <select id="getWorkerWithWorkTypeListById" resultMap="SearchByPage">
+        select
+            w.*,
+            YEAR(CURDATE())-YEAR(w.birthday) age
+        from
+            worker w
+        where
+            w.id = #{id}
+    </select>
+
+    <!--    根据id修改密码-->
+    <update id="updatepasswordById" >
+        update worker
+        set password = #{password}
+        where id = #{id}
+    </update>
+
+
+    <!--    按条件(不含工种条件)分页查询工人-->
+    <select id="searchAllWorkerByPage" resultMap="SearchByPage">
+        SELECT
+        w.*,
+        YEAR(CURDATE())-YEAR(w.birthday) age
+        FROM
+        worker w
+        <where>
+            w.state = 1
+            or
+            w.state = 0
+
+        </where>
+    </select>
+
+<!--    获取工人列表用于导出-->
+    <select id="getAllWorkerToExport" resultMap="SearchWithWorkerTypeByPage">
+        select
+            w.*,
+            YEAR(CURDATE())-YEAR(w.birthday) age,
+            wt.id wtid,
+            wt.name wtname
+        from
+            worker as w
+            left join worker_work_type AS wwt on wwt.workerId = w.id
+            left join work_type AS wt on wt.id = wwt.tid
+    </select>
+</mapper>

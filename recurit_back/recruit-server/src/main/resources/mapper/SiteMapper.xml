@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.glt.server.mapper.SiteMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.glt.server.pojo.Site">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="user_name" property="userName" />
+        <result column="phone" property="phone" />
+        <result column="address" property="address" />
+        <result column="create_time" property="createTime" />
+        <result column="start_time" property="startTime" />
+        <result column="complete_time" property="completeTime" />
+        <result column="expect_time" property="expectTime" />
+        <result column="userface" property="userface" />
+        <result column="remark" property="remark" />
+        <result column="recurit_state" property="recuritState" />
+        <result column="site_state" property="siteState" />
+        <result column="dflag" property="dflag" />
+    </resultMap>
+
+<!--    工地详细信息（包含招聘信息）-->
+    <resultMap id="SiteDetails" type="com.glt.server.pojo.Site" extends="BaseResultMap">
+<!--        <association property="company" javaType="com.glt.server.pojo.Company">-->
+<!--            <id column="cid" property="id"/>-->
+<!--            <result column="cname" property="name"/>-->
+<!--            <result column="cphone" property="phone"/>-->
+<!--            <result column="caddress" property="address"/>-->
+<!--            <result column="cperson" property="person"/>-->
+<!--            <result column="ccreateTime" property="createTime"/>-->
+<!--            <result column="clicense" property="license"/>-->
+<!--            <result column="cuserface" property="userface"/>-->
+<!--            <result column="cstate" property="state"/>-->
+<!--            <result column="cremark" property="remark"/>-->
+<!--            <result column="cupdateTime" property="updateTime"/>-->
+<!--        </association>-->
+        <collection property="recuritMessageList" ofType="com.glt.server.pojo.RecuritMessage">
+            <id column="rid" property="id"/>
+            <result column="rnumber" property="number"/>
+            <result column="rsalary" property="salary"/>
+            <result column="rstype_id" property="stypeId"/>
+            <result column="rwtype_id" property="wtypeId"/>
+            <result column="rcreate_time" property="createTime"/>
+            <result column="rremark" property="remark"/>
+            <result column="rstate" property="state"/>
+            <association column="rstype_id" property="salaryType"
+                         javaType="com.glt.server.pojo.SalaryType"
+                         select="getSalaryTypeBycondition"
+                         >
+            </association>
+            <association column="rwtype_id" property="workType"
+                         javaType="com.glt.server.pojo.WorkType"
+                         select="getWorkTypeTypeBycondition"
+            >
+            </association>
+        </collection>
+    </resultMap>
+
+    <!--    工地信息（包含公司信息）-->
+    <resultMap id="SiteWithCompany" type="com.glt.server.pojo.Site" extends="BaseResultMap">
+        <association property="company"
+                     javaType="com.glt.server.pojo.Company"
+                     column="id"
+                     select="getCompanyByCondition"
+        >
+
+        </association>
+
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, name, user_name, phone, address, create_time, start_time, complete_time, expect_time, userface, remark, recurit_state, site_state
+    </sql>
+
+
+<!--    薪资种类基础map-->
+    <resultMap id="BaseSalaryMap" type="com.glt.server.pojo.SalaryType">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+    </resultMap>
+
+<!--    工种种类基本map-->
+    <resultMap id="BaseWorkTypeMap" type="com.glt.server.pojo.WorkType">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+    </resultMap>
+
+<!--    子查询，通过id查询对应的工资种类-->
+    <select id="getSalaryTypeBycondition" resultMap="BaseSalaryMap">
+        select
+            *
+        from
+            salary_type s
+        where
+            s.id = #{stypeId}
+    </select>
+
+    <!--    子查询，通过id查询对应的工种种类-->
+    <select id="getWorkTypeTypeBycondition" resultMap="BaseWorkTypeMap">
+        select
+            *
+        from
+            work_type w
+        where
+            w.id = #{wtypeId}
+    </select>
+
+<!--    子查询，通过工地id查询对应的公司-->
+    <select id="getCompanyByCondition" resultType="com.glt.server.pojo.Company">
+        select
+            c.*
+        from
+            company c
+            left join company_site as cs on cs.companyId = c.id
+            left join site as s on s.id = cs.sid
+        where
+            s.id = #{id}
+    </select>
+
+<!--    插入工地并返回id，只有加后面两个字段(useGeneratedKeys,keyProperty)才能做到返回id-->
+    <insert id="insertGetId" useGeneratedKeys="true" keyProperty="id">
+        insert into site
+            (name ,user_name, phone,address,create_time,start_time,expect_time,userface,remark,recurit_state,site_state)
+        values
+            (#{name},#{userName},#{phone},
+             #{address},#{createTime},
+             #{startTime},#{expectTime},
+             #{userface},#{remark},
+             #{recuritState},
+             #{siteState})
+
+    </insert>
+
+<!--    获取公司属下所有工地-->
+    <select id="getcompanySites" resultMap="BaseResultMap">
+        SELECT
+            s.*
+
+        FROM
+            site s
+                LEFT JOIN company_site as cs ON s.id = cs.sid
+                LEFT JOIN company as c ON c.id = cs.companyId
+        WHERE
+            c.id = #{id}
+            and
+            s.dflag = 1
+        ORDER BY s.id DESC
+    </select>
+
+<!--    获取公司所属招聘中的工地-->
+    <select id="getcompanyRecuritSites" resultMap="BaseResultMap">
+        SELECT
+            s.*
+
+        FROM
+            site s
+                LEFT JOIN company_site as cs ON s.id = cs.sid
+                LEFT JOIN company as c ON c.id = cs.companyId
+        WHERE
+            c.id = #{id}
+            and
+            s.recurit_state = 1
+            and
+            s.site_state = 1
+        ORDER BY s.id DESC
+    </select>
+
+<!--    根据工地id获取工地详细信息（包含拥有的招聘信息）-->
+    <select id="getSiteDetails" resultMap="SiteDetails">
+        SELECT
+            s.*,
+            r.id as rid,
+            r.number as rnumber,
+            r.salary as rsalary,
+            r.stype_id as rstype_id,
+            r.wtype_id as rwtype_id,
+            r.create_time as rcreate_time,
+            r.remark as rremark,
+            r.state as rstate
+
+        FROM
+            site s
+                LEFT JOIN site_recurit_message as srm on s.id = srm.siteId
+                LEFT JOIN recurit_message as r on srm.rid = r.id
+        WHERE
+            s.id = #{id}
+        ORDER BY r.id DESC
+    </select>
+
+<!--    分页多条件查询工地信息-->
+    <select id="searchSiteByPage" resultMap="SiteWithCompany">
+        SELECT
+            s.*
+        FROM
+            site s
+        <where>
+            s.recurit_state = 1
+            and
+            s.site_state = 1
+            <if test="null != site.name and ''!=site.name">
+                and s.name LIKE CONCAT( '%', #{site.name}, '%' )
+            </if>
+            <if test="null != site.phone and ''!=site.phone ">
+                and s.phone  LIKE CONCAT( '%', #{site.phone}, '%' )
+            </if>
+            <if test="null != site.address and ''!=site.address ">
+                and s.address  LIKE CONCAT( '%', #{site.address}, '%' )
+            </if>
+            <if test="null != site.address and ''!=site.address ">
+                and s.address  LIKE CONCAT( '%', #{site.address}, '%' )
+            </if>
+            <if test="null!=beginDateScope  and 2==beginDateScope.length">
+                AND s.start_time BETWEEN #{beginDateScope[0]}  AND #{beginDateScope[1]}
+            </if>
+
+        </where>
+    </select>
+
+
+    <!--    系统管理员获取所有工地-->
+    <select id="getAllSiteByPage" resultMap="SiteWithCompany">
+        SELECT
+        s.*
+        FROM
+        site s
+
+    </select>
+
+    <!--    系统管理员导出所有工地-->
+    <select id="exportAllsite" resultMap="SiteWithCompany">
+        SELECT
+            s.*
+        FROM
+            site s
+
+    </select>
+</mapper>

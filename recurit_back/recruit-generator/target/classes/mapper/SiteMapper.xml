@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.glt.server.mapper.SiteMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.glt.server.pojo.Site">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="user_name" property="userName" />
+        <result column="phone" property="phone" />
+        <result column="address" property="address" />
+        <result column="create_time" property="createTime" />
+        <result column="start_time" property="startTime" />
+        <result column="complete_time" property="completeTime" />
+        <result column="expect_time" property="expectTime" />
+        <result column="userface" property="userface" />
+        <result column="remark" property="remark" />
+        <result column="recurit_state" property="recuritState" />
+        <result column="site_state" property="siteState" />
+        <result column="dflag" property="dflag" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, name, user_name, phone, address, create_time, start_time, complete_time, expect_time, userface, remark, recurit_state, site_state, dflag
+    </sql>
+
+</mapper>

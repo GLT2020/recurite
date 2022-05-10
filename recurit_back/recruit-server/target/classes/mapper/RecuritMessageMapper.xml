@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.glt.server.mapper.RecuritMessageMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.glt.server.pojo.RecuritMessage">
+        <id column="id" property="id" />
+        <result column="number" property="number" />
+        <result column="salary" property="salary" />
+        <result column="stype_id" property="stypeId" />
+        <result column="wtype_id" property="wtypeId" />
+        <result column="create_time" property="createTime" />
+        <result column="remark" property="remark" />
+        <result column="state" property="state" />
+    </resultMap>
+
+
+
+<!--    包含薪资种类和工种（用于工地获取自己的招聘信息）-->
+    <resultMap id="RecuritMsgMap" type="com.glt.server.pojo.RecuritMessage" extends="BaseResultMap">
+        <association column="stype_id" property="salaryType"
+                     javaType="com.glt.server.pojo.SalaryType"
+                     select="getSalaryTypeBycondition"
+        >
+        </association>
+        <association column="wtype_id" property="workType"
+                     javaType="com.glt.server.pojo.WorkType"
+                     select="getWorkTypeTypeBycondition"
+        >
+        </association>
+    </resultMap>
+
+    <!--    包含工地、薪资种类和工种(用于用户搜索招聘信息)-->
+    <resultMap id="RecuritMsgByPageMap" type="com.glt.server.pojo.RecuritMessage" extends="BaseResultMap">
+        <association column="id" property="site"
+                     javaType="com.glt.server.pojo.Site"
+                     select="getSiteBycondition"
+        >
+        </association>
+        <association column="stype_id" property="salaryType"
+                     javaType="com.glt.server.pojo.SalaryType"
+                     select="getSalaryTypeBycondition"
+        >
+        </association>
+        <association column="wtype_id" property="workType"
+                     javaType="com.glt.server.pojo.WorkType"
+                     select="getWorkTypeTypeBycondition"
+        >
+        </association>
+    </resultMap>
+
+    <!--    包含工地、薪资种类和工种(用于用户搜索招聘信息 包含地址条件的)-->
+    <resultMap id="RecuritMsgWithAddressByPageMap" type="com.glt.server.pojo.RecuritMessage" extends="BaseResultMap">
+        <association property="site"
+                     javaType="com.glt.server.pojo.Site"
+        >
+            <id column="sid" property="id" />
+            <result column="sname" property="name" />
+            <result column="suserName" property="userName" />
+            <result column="sphone" property="phone" />
+            <result column="saddress" property="address" />
+            <result column="screateTime" property="createTime" />
+            <result column="sstartTime" property="startTime" />
+            <result column="scompleteTime" property="completeTime" />
+            <result column="sexpectTime" property="expectTime" />
+            <result column="suserface" property="userface" />
+            <result column="sremark" property="remark" />
+            <result column="srecuritState" property="recuritState" />
+            <result column="ssiteState" property="siteState" />
+        </association>
+        <association column="stype_id" property="salaryType"
+                     javaType="com.glt.server.pojo.SalaryType"
+                     select="getSalaryTypeBycondition"
+        >
+        </association>
+        <association column="wtype_id" property="workType"
+                     javaType="com.glt.server.pojo.WorkType"
+                     select="getWorkTypeTypeBycondition"
+        >
+        </association>
+    </resultMap>
+
+<!--  =============== 子查询+基础map==============-->
+    <!-- 工地基础map-->
+    <resultMap id="BaseSiteMap" type="com.glt.server.pojo.Site">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="user_name" property="userName" />
+        <result column="phone" property="phone" />
+        <result column="address" property="address" />
+        <result column="create_time" property="createTime" />
+        <result column="start_time" property="startTime" />
+        <result column="complete_time" property="completeTime" />
+        <result column="expect_time" property="expectTime" />
+        <result column="userface" property="userface" />
+        <result column="remark" property="remark" />
+        <result column="recurit_state" property="recuritState" />
+        <result column="site_state" property="siteState" />
+    </resultMap>
+
+    <!--    薪资种类基础map-->
+    <resultMap id="BaseSalaryMap" type="com.glt.server.pojo.SalaryType">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+    </resultMap>
+
+    <!--    工种种类基本map-->
+    <resultMap id="BaseWorkTypeMap" type="com.glt.server.pojo.WorkType">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="state" property="state" />
+    </resultMap>
+
+    <!--    子查询，通过id查询对应的工地-->
+    <select id="getSiteBycondition" resultMap="BaseSiteMap">
+        select
+            s.*
+        from
+            site s
+            left join site_recurit_message as srm on srm.siteId = s.id
+            left join recurit_message as rm on rm.id = srm.rid
+        where
+            rm.id = #{id}
+    </select>
+
+    <!--    子查询，通过id查询对应的工资种类-->
+    <select id="getSalaryTypeBycondition" resultMap="BaseSalaryMap">
+        select
+            *
+        from
+            salary_type s
+        where
+            s.id = #{stypeId}
+    </select>
+
+    <!--    子查询，通过id查询对应的工种种类-->
+    <select id="getWorkTypeTypeBycondition" resultMap="BaseWorkTypeMap">
+        select
+            *
+        from
+            work_type w
+        where
+            w.id = #{wtypeId}
+    </select>
+
+
+    <!--    工人用户map-->
+    <resultMap id="BaseWorkerMap" type="com.glt.server.pojo.Worker">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="password" property="password" />
+        <result column="phone" property="phone" />
+        <result column="email" property="email" />
+        <result column="nowAddress" property="nowAddress" />
+        <result column="address" property="address" />
+        <result column="education" property="education" />
+        <result column="sex" property="sex" />
+        <result column="birthday" property="birthday" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="userface" property="userface" />
+        <result column="remark" property="remark" />
+        <result column="state" property="state" />
+        <result column="appTime" property="appTime" />
+
+<!--        <collection property="workTypeList" column="id"-->
+<!--                    javaType="java.util.List"-->
+<!--                    ofType="com.glt.server.pojo.WorkType"-->
+<!--                    select="getWorkTypeByWorkerId">-->
+<!--        </collection>-->
+        <collection property="workTypeList" ofType="com.glt.server.pojo.WorkType">
+            <id column="wtid" property="id" />
+            <result column="wtname" property="name"/>
+        </collection>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, number, salary, stype_id, wtype_id, create_time, remark, state
+    </sql>
+
+
+<!--    添加招聘信息-->
+    <insert id="addRecuritMsg" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO recurit_message (number,salary,stype_id,wtype_id,create_time,remark,state)
+        values (#{number},#{salary},#{stypeId},#{wtypeId},#{createTime},#{remark},#{state})
+
+    </insert>
+
+<!--    获取应聘的工人的信息-->
+    <select id="getWorkerMsgBySid" resultMap="BaseWorkerMap">
+        SELECT
+            w.name,
+            w.nowAddress,
+            w.address,
+            w.birthday,
+            w.education,
+            w.email,
+            w.id,
+            w.phone,
+            w.remark,
+            w.sex,
+            wt.id wtid,
+            wt.name wtname,
+            rmw.createTime appTime
+        FROM
+            worker w
+                LEFT JOIN recurit_message_worker as rmw on w.id = rmw.workerId
+                LEFT JOIN recurit_message as rm on rm.id = rmw.rid
+                LEFT JOIN worker_work_type as wwt on wwt.workerId = w.id
+                LEFT JOIN work_type as wt on wt.id = wwt.tid
+
+        WHERE
+            rm.id = #{id}
+        ORDER BY rmw.createTime
+    </select>
+
+<!--    根据工地id获取所属的所有招聘信息-->
+    <select id="getSiteAllRecruitMsg" resultMap="RecuritMsgMap">
+        SELECT
+            r.*
+
+        FROM
+            site s
+                LEFT JOIN site_recurit_message as srm on s.id = srm.siteId
+                LEFT JOIN recurit_message as r on srm.rid = r.id
+        WHERE
+            s.id = #{rid}
+        ORDER BY r.id DESC
+
+    </select>
+
+<!--    多条件查询招聘信息（返回包含工地信息）-->
+    <select id="searchRecuritMsgByPage" resultMap="RecuritMsgByPageMap">
+        SELECT
+            rm.*
+        FROM
+            recurit_message rm
+
+        <where>
+            rm.state = 1
+
+            <if test="null != wtypeId and ''!=wtypeId">
+                and rm.wtype_id = #{wtypeId}
+            </if>
+            <if test="null != stypeId and ''!=stypeId">
+                and rm.stype_id = #{stypeId}
+            </if>
+
+        </where>
+    </select>
+
+    <!--    多条件查询招聘信息包含地址条件（返回包含工地信息）-->
+    <select id="searchRecuritMsgWithAddressByPage" resultMap="RecuritMsgWithAddressByPageMap">
+        SELECT
+            rm.*,
+            s.id sid,
+            s.name sname,
+            s.user_name suserName,
+            s.phone sphone,
+            s.address saddress,
+            s.create_time screateTime,
+            s.start_time sstartTime,
+            s.complete_time scompleteTime,
+            s.expect_time sexpectTime,
+            s.userface suserface,
+            s.remark sremark,
+            s.recurit_state srecuritState,
+            s.site_state ssiteState
+        FROM
+            site s
+            left join site_recurit_message as srm on srm.siteId = s.id
+            left join recurit_message as rm on rm.id = srm.rid
+        <where>
+            rm.state = 1
+
+            and s.address LIKE CONCAT( '%', #{address}, '%' )
+
+            <if test="null != wtypeId and ''!=wtypeId">
+                and rm.wtype_id = #{wtypeId}
+            </if>
+            <if test="null != stypeId and ''!=stypeId">
+                and rm.stype_id = #{stypeId}
+            </if>
+
+        </where>
+    </select>
+
+<!--    工人根据工人id获取已应聘的信息-->
+    <select id="searchApplyRMsgByPage" resultMap="RecuritMsgByPageMap">
+        select
+            rm.*
+        from
+            recurit_message rm
+            left join recurit_message_worker as rmw on rmw.rid = rm.id
+            left join worker as w on rmw.workerId = w.id
+        where
+            w.id = #{id}
+            and
+            rm.state = 1
+
+    </select>
+</mapper>

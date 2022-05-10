@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.glt.server.mapper.WorkermailboxMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.glt.server.pojo.Workermailbox">
+        <id column="id" property="id" />
+        <result column="sender" property="sender" />
+        <result column="receiver" property="receiver" />
+        <result column="create_time" property="createTime" />
+        <result column="topic" property="topic" />
+        <result column="content" property="content" />
+        <result column="workerId" property="workerId" />
+        <result column="siteId" property="siteId" />
+        <result column="worktypeId" property="worktypeId" />
+        <result column="type" property="type" />
+        <result column="state" property="state" />
+        <result column="comdflag" property="comdflag" />
+        <result column="workdflag" property="workdflag" />
+    </resultMap>
+
+<!--    包含工人和工地信息-->
+    <resultMap id="PageMsgMap" type="com.glt.server.pojo.Workermailbox" extends="BaseResultMap">
+        <association column="sender" property="worker" select="getWorker"></association>
+        <association column="siteId" property="site" select="getSite"></association>
+        <association column="worktypeId" property="workType" select="getWorkType"></association>
+        <association column="receiver" property="company" select="getCompany"></association>
+    </resultMap>
+
+    <!--工地基本map-->
+    <resultMap id="BaseSiteMap" type="com.glt.server.pojo.Site">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="user_name" property="userName" />
+        <result column="phone" property="phone" />
+        <result column="address" property="address" />
+        <result column="create_time" property="createTime" />
+        <result column="start_time" property="startTime" />
+        <result column="complete_time" property="completeTime" />
+        <result column="expect_time" property="expectTime" />
+        <result column="userface" property="userface" />
+        <result column="remark" property="remark" />
+        <result column="recurit_state" property="recuritState" />
+        <result column="site_state" property="siteState" />
+    </resultMap>
+    <!--工人基本map-->
+    <resultMap id="BaseWorkerMap" type="com.glt.server.pojo.Worker">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="password" property="password" />
+        <result column="phone" property="phone" />
+        <result column="email" property="email" />
+        <result column="nowAddress" property="nowAddress" />
+        <result column="address" property="address" />
+        <result column="education" property="education" />
+        <result column="sex" property="sex" />
+        <result column="birthday" property="birthday" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="userface" property="userface" />
+        <result column="remark" property="remark" />
+        <result column="state" property="state" />
+    </resultMap>
+    <!--    工种基本map-->
+    <resultMap id="BaseWorkTypeMap" type="com.glt.server.pojo.WorkType">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="state" property="state" />
+    </resultMap>
+<!--    公司基本map-->
+    <resultMap id="BaseComoanyMap" type="com.glt.server.pojo.Company">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="password" property="password" />
+        <result column="phone" property="phone" />
+        <result column="address" property="address" />
+        <result column="license" property="license" />
+        <result column="person" property="person" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="userface" property="userface" />
+        <result column="remark" property="remark" />
+        <result column="state" property="state" />
+    </resultMap>
+
+    <!--    子查询,获取工人-->
+    <select id="getWorker" resultMap="BaseWorkerMap">
+        select
+            w.*
+        from
+            worker w
+        where
+            w.id = #{sender}
+    </select>
+
+    <!--    子查询,获取工地-->
+    <select id="getSite" resultMap="BaseSiteMap">
+        select
+            s.*
+        from
+            site s
+        where
+            s.id = #{siteId}
+    </select>
+
+    <!--    子查询,获取工种-->
+    <select id="getWorkType" resultMap="BaseWorkTypeMap">
+        select
+            wt.*
+        from
+            work_type wt
+        where
+            wt.id = #{worktypeId}
+    </select>
+
+    <!--    子查询,获取公司-->
+    <select id="getCompany" resultMap="BaseComoanyMap">
+        select
+            c.*
+        from
+            company c
+        where
+            c.id = #{receiver}
+    </select>
+
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, sender, receiver, create_time, topic, content, workerId, siteId, type, state
+    </sql>
+
+<!--    公司分页获取收件箱-->
+    <select id="getCompanyMsgByPage" resultMap="PageMsgMap">
+        select
+            wmb.*
+        from
+            workermailbox wmb
+        where
+            wmb.receiver = #{cid}
+            and
+            wmb.comdflag = 1
+            order by wmb.create_time DESC
+    </select>
+
+    <!--    工人获取分页发件箱-->
+    <select id="getSendedMsg" resultMap="PageMsgMap">
+        select
+            wmb.*
+        from
+            workermailbox wmb
+        where
+            wmb.sender = #{wid}
+          and
+            wmb.workdflag = 1
+        order by wmb.create_time DESC
+    </select>
+</mapper>
